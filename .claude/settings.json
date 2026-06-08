@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(flutter *)",
+      "Bash(dart *)",
+      "Bash(fvm *)"
+    ]
+  }
+}
