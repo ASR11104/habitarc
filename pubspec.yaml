@@ -43,9 +43,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/png/
 
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/habitarc-icon.png"
+  image_path: "assets/png/habitarc-icon-512.png"
   min_sdk_android: 21
