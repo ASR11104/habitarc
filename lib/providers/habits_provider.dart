@@ -101,6 +101,22 @@ class HabitsRepository {
       await NotificationService.cancelReminder(hws.habit.id);
     }
   }
+
+  /// Update the today-progress notification based on the full habit list.
+  /// Call after any toggle and on app open.
+  Future<void> syncProgressNotification(List<HabitWithStreak> all) async {
+    final today = DateTime.now();
+    final tNorm = DateTime(today.year, today.month, today.day);
+
+    final total = all.length;
+    final done = all.where((h) => h.completedDates.contains(tNorm)).length;
+    final pending = all
+        .where((h) => !h.completedDates.contains(tNorm))
+        .map((h) => h.habit.name)
+        .toList();
+
+    await NotificationService.showTodayProgress(done, total, pending);
+  }
 }
 
 final habitsRepositoryProvider = Provider<HabitsRepository>((ref) {

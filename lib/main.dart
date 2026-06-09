@@ -7,5 +7,6 @@ import 'services/notification_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
+  await NotificationService.scheduleDailyReminder();
   runApp(const ProviderScope(child: HabitArcApp()));
 }

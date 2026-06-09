@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../models/habit_with_streak.dart';
 import '../../../providers/habits_provider.dart';
 import '../../add_habit/add_habit_screen.dart';
 import 'habit_row_tile.dart';
@@ -20,8 +21,15 @@ class WeekView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final weekDays = _currentWeekDays();
     final range = (start: weekDays.first, end: weekDays.last);
-    final dataAsync = ref.watch(habitsWithStreakProvider(range));
     final repo = ref.read(habitsRepositoryProvider);
+
+    // Sync the progress notification whenever habit data changes (app open + toggles).
+    ref.listen<AsyncValue<List<HabitWithStreak>>>(
+      habitsWithStreakProvider(range),
+      (_, next) => next.whenData(repo.syncProgressNotification),
+    );
+
+    final dataAsync = ref.watch(habitsWithStreakProvider(range));
 
     return dataAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
