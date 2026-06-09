@@ -7,7 +7,7 @@
 ## Todo
 - [x] Test on physical device [type: chore]
 - [x] App icon + splash screen [type: feature]
-- [ ] Habit detail screen (tap habit → full monthly calendar for that habit) [type: feature]
+- [x] Habit detail screen (tap habit → full monthly calendar for that habit) [type: feature]
 
 ## Done
 - [x] Flutter project scaffold

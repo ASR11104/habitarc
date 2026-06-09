@@ -45,6 +45,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<HabitLog>> getLogsForHabit(int habitId) =>
       (select(habitLogs)..where((l) => l.habitId.equals(habitId))).get();
 
+  Stream<List<HabitLog>> watchLogsForHabit(int habitId) =>
+      (select(habitLogs)..where((l) => l.habitId.equals(habitId))).watch();
+
   Future<void> toggleHabitLog(int habitId, DateTime date) async {
     final normalized = DateTime(date.year, date.month, date.day);
     final existing = await (select(habitLogs)

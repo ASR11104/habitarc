@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/habit_with_streak.dart';
 import '../../../providers/habits_provider.dart';
 import '../../add_habit/add_habit_screen.dart';
+import '../../habit_detail/habit_detail_screen.dart';
 import 'habit_row_tile.dart';
 
 class WeekView extends ConsumerWidget {
@@ -79,6 +80,12 @@ class WeekView extends ConsumerWidget {
             return HabitRowTile(
               data: hws,
               weekDays: weekDays,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HabitDetailScreen(habit: hws.habit),
+                ),
+              ),
               onToggle: (date) async {
                 await repo.toggleLog(hws.habit.id, date);
                 // Re-read updated state and sync reminders

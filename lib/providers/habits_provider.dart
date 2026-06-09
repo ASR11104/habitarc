@@ -8,6 +8,11 @@ import 'database_provider.dart';
 
 // ── Raw streams ─────────────────────────────────────────────────────────────
 
+final allLogsForHabitProvider =
+    StreamProvider.family<List<HabitLog>, int>((ref, habitId) {
+  return ref.watch(databaseProvider).watchLogsForHabit(habitId);
+});
+
 final habitsStreamProvider = StreamProvider<List<Habit>>((ref) {
   return ref.watch(databaseProvider).watchActiveHabits();
 });

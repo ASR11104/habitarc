@@ -6,6 +6,7 @@ class HabitRowTile extends StatelessWidget {
   final HabitWithStreak data;
   final List<DateTime> weekDays; // 7 days Mon–Sun
   final void Function(DateTime date) onToggle;
+  final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
   const HabitRowTile({
@@ -13,6 +14,7 @@ class HabitRowTile extends StatelessWidget {
     required this.data,
     required this.weekDays,
     required this.onToggle,
+    this.onTap,
     this.onLongPress,
   });
 
@@ -27,6 +29,7 @@ class HabitRowTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
         onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(12),
