@@ -1,8 +1,6 @@
 # Backlog
 
 ## Features
-- [ ] Habit detail screen — full monthly calendar for a single habit
-- [ ] App icon + custom splash screen
 - [ ] Habit reordering (drag to sort)
 - [ ] Notification time customisable per habit (not just 8 AM)
 - [ ] Widget (home screen glanceable view)
@@ -10,7 +8,7 @@
 - [ ] Onboarding flow for first-time users
 
 ## Bugs
-- [ ] <!-- describe bug -->
+- [ ] Release build requires --no-tree-shake-icons (dynamic IconData from DB)
 
 ## Tech Debt
 - [ ] Upgrade build_runner once AOT hooks issue resolves in SDK
