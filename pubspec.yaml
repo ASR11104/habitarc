@@ -26,6 +26,9 @@ dependencies:
   # Utils
   intl: ^0.20.2
 
+  # SVG rendering
+  flutter_svg: ^2.0.16
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -34,6 +37,15 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.22.1
   build_runner: ">=2.4.14 <2.6.0"
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/habitarc-icon.png"
+  min_sdk_android: 21
