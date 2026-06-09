@@ -33,6 +33,11 @@ class AppDatabase extends _$AppDatabase {
       (update(habits)..where((h) => h.id.equals(id)))
           .write(const HabitsCompanion(isActive: Value(false)));
 
+  Future<void> deleteHabit(int id) => transaction(() async {
+        await (delete(habitLogs)..where((l) => l.habitId.equals(id))).go();
+        await (delete(habits)..where((h) => h.id.equals(id))).go();
+      });
+
   // ── Habit Logs ───────────────────────────────────────────────────────────
 
   Stream<List<HabitLog>> watchLogsForDateRange(

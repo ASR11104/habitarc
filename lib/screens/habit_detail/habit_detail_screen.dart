@@ -86,6 +86,11 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                   builder: (_) => AddHabitScreen(habit: habit)),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete habit',
+            onPressed: () => _confirmDelete(context, habit),
+          ),
         ],
       ),
       body: logsAsync.when(
@@ -228,6 +233,38 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Habit habit) async {
+    final navigator = Navigator.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete habit?'),
+        content: Text(
+          '"${habit.name}" and all its history will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await ref.read(habitsRepositoryProvider).deleteHabit(habit.id);
+      navigator.pop();
+    }
   }
 
   static int _currentStreak(Set<DateTime> dates) {

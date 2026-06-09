@@ -88,6 +88,11 @@ class HabitsRepository {
     await NotificationService.cancelReminder(id);
   }
 
+  Future<void> deleteHabit(int id) async {
+    await NotificationService.cancelReminder(id);
+    await _db.deleteHabit(id);
+  }
+
   Future<void> toggleLog(int habitId, DateTime date) async {
     await _db.toggleHabitLog(habitId, date);
   }

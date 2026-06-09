@@ -124,16 +124,6 @@ class WeekView extends ConsumerWidget {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.archive_outlined),
-              title: const Text('Archive'),
-              onTap: () async {
-                Navigator.pop(context);
-                await ref
-                    .read(habitsRepositoryProvider)
-                    .archiveHabit(habit.id);
-              },
-            ),
           ],
         ),
       ),
