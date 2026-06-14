@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/app_database.dart';
+import '../../models/habit_with_streak.dart';
 import '../../providers/habits_provider.dart';
 import '../add_habit/add_habit_screen.dart';
 
@@ -39,6 +40,17 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
       setState(() => _displayMonth =
           DateTime(_displayMonth.year, _displayMonth.month + 1));
     }
+  }
+
+  bool _isScheduledOn(DateTime date) {
+    if (widget.habit.isWeeklyPillar != true) return true;
+    if (widget.habit.weeklyDays == null || widget.habit.weeklyDays!.isEmpty) return false;
+    final days = widget.habit.weeklyDays!
+        .split(',')
+        .map((s) => int.tryParse(s.trim()))
+        .whereType<int>()
+        .toList();
+    return days.contains(date.weekday);
   }
 
   @override
@@ -99,8 +111,9 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         data: (logs) {
           final allDates = logs.map((l) => l.logDate).toSet();
 
-          final currentStreak = _currentStreak(allDates);
-          final bestStreak = _bestStreak(allDates);
+          final hws = HabitWithStreak(habit: habit, completedDates: allDates);
+          final currentStreak = hws.streak;
+          final bestStreak = _bestStreak(allDates, _isScheduledOn);
           final total = allDates.length;
 
           final monthStart = _displayMonth;
@@ -112,8 +125,16 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
               ? today.day
               : monthEnd.day;
 
+          int totalScheduledDays = 0;
+          for (int d = 1; d <= daysElapsed; d++) {
+            final date = DateTime(_displayMonth.year, _displayMonth.month, d);
+            if (_isScheduledOn(date)) {
+              totalScheduledDays++;
+            }
+          }
+
           final monthDates = allDates
-              .where((d) => !d.isBefore(monthStart) && !d.isAfter(monthEnd))
+              .where((d) => !d.isBefore(monthStart) && !d.isAfter(monthEnd) && _isScheduledOn(d))
               .toSet();
 
           return Column(
@@ -193,7 +214,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: _CompletionBar(
                   done: monthDates.length,
-                  total: daysElapsed,
+                  total: totalScheduledDays,
                   color: habitColor,
                 ),
               ),
@@ -226,6 +247,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                   month: _displayMonth,
                   completedDates: monthDates,
                   habitColor: habitColor,
+                  isScheduled: _isScheduledOn,
                 ),
               ),
             ],
@@ -267,34 +289,30 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
     }
   }
 
-  static int _currentStreak(Set<DateTime> dates) {
-    int count = 0;
-    DateTime day = _today;
-    while (dates.contains(day)) {
-      count++;
-      day = day.subtract(const Duration(days: 1));
-    }
-    return count;
-  }
-
-  static int _bestStreak(Set<DateTime> dates) {
+  int _bestStreak(Set<DateTime> dates, bool Function(DateTime) isScheduled) {
     if (dates.isEmpty) return 0;
     final sorted = dates.toList()..sort();
-    int best = 1, current = 1;
-    for (int i = 1; i < sorted.length; i++) {
-      if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
-        current++;
-        if (current > best) best = current;
-      } else {
-        current = 1;
+    final minDate = sorted.first;
+    final maxDate = sorted.last;
+
+    int best = 0;
+    int current = 0;
+
+    DateTime day = minDate;
+    while (!day.isAfter(maxDate)) {
+      if (isScheduled(day)) {
+        if (dates.contains(day)) {
+          current++;
+          if (current > best) {
+            best = current;
+          }
+        } else {
+          current = 0;
+        }
       }
+      day = DateTime(day.year, day.month, day.day + 1);
     }
     return best;
-  }
-
-  static DateTime get _today {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
   }
 }
 
@@ -402,11 +420,13 @@ class _SingleHabitCalendarGrid extends StatelessWidget {
   final DateTime month;
   final Set<DateTime> completedDates;
   final Color habitColor;
+  final bool Function(DateTime) isScheduled;
 
   const _SingleHabitCalendarGrid({
     required this.month,
     required this.completedDates,
     required this.habitColor,
+    required this.isScheduled,
   });
 
   @override
@@ -439,9 +459,12 @@ class _SingleHabitCalendarGrid extends StatelessWidget {
         final isFuture = date.isAfter(today);
         final isToday = date == today;
         final completed = completedDates.contains(date);
+        final scheduled = isScheduled(date);
 
         Color cellColor;
-        if (isFuture) {
+        if (!scheduled) {
+          cellColor = Colors.transparent;
+        } else if (isFuture) {
           cellColor = Colors.transparent;
         } else if (completed) {
           cellColor = habitColor;
@@ -449,11 +472,13 @@ class _SingleHabitCalendarGrid extends StatelessWidget {
           cellColor = cs.surfaceContainerHighest;
         }
 
+        final showBorder = scheduled && isToday && !completed;
+
         return Container(
           decoration: BoxDecoration(
             color: cellColor,
             shape: BoxShape.circle,
-            border: isToday && !completed
+            border: showBorder
                 ? Border.all(color: habitColor, width: 2)
                 : null,
           ),
@@ -462,8 +487,10 @@ class _SingleHabitCalendarGrid extends StatelessWidget {
               '$dayNumber',
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                color: completed && !isFuture ? Colors.white : cs.onSurface,
+                fontWeight: scheduled && isToday ? FontWeight.bold : FontWeight.normal,
+                color: !scheduled
+                    ? cs.onSurfaceVariant.withValues(alpha: 0.20)
+                    : (completed && !isFuture ? Colors.white : cs.onSurface),
               ),
             ),
           ),

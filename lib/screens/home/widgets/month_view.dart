@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../database/app_database.dart';
 import '../../../providers/habits_provider.dart';
 
 class MonthView extends ConsumerStatefulWidget {
@@ -95,7 +96,6 @@ class _MonthViewState extends ConsumerState<MonthView> {
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (logs) {
-                final totalHabits = habits.length;
                 final completedByDate = <DateTime, int>{};
                 for (final log in logs) {
                   completedByDate.update(
@@ -105,7 +105,7 @@ class _MonthViewState extends ConsumerState<MonthView> {
 
                 return _CalendarGrid(
                   month: _displayMonth,
-                  totalHabits: totalHabits,
+                  habits: habits,
                   completedByDate: completedByDate,
                 );
               },
@@ -136,14 +136,33 @@ class _MonthViewState extends ConsumerState<MonthView> {
 
 class _CalendarGrid extends StatelessWidget {
   final DateTime month;
-  final int totalHabits;
+  final List<Habit> habits;
   final Map<DateTime, int> completedByDate;
 
   const _CalendarGrid({
     required this.month,
-    required this.totalHabits,
+    required this.habits,
     required this.completedByDate,
   });
+
+  int _scheduledHabitsCount(DateTime date) {
+    int count = 0;
+    for (final h in habits) {
+      if (h.isWeeklyPillar != true) {
+        count++;
+      } else if (h.weeklyDays != null) {
+        final days = h.weeklyDays!
+            .split(',')
+            .map((s) => int.tryParse(s.trim()))
+            .whereType<int>()
+            .toList();
+        if (days.contains(date.weekday)) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,13 +198,14 @@ class _CalendarGrid extends StatelessWidget {
         final isFuture = date.isAfter(today);
         final isToday = date == today;
         final completed = completedByDate[date] ?? 0;
+        final totalScheduled = _scheduledHabitsCount(date);
         final ratio =
-            totalHabits > 0 ? completed / totalHabits : 0.0;
+            totalScheduled > 0 ? completed / totalScheduled : 0.0;
 
         Color cellColor;
         if (isFuture) {
           cellColor = Colors.transparent;
-        } else if (totalHabits == 0) {
+        } else if (totalScheduled == 0) {
           cellColor = cs.surfaceContainerHighest;
         } else if (ratio == 1.0) {
           cellColor = cs.primary;

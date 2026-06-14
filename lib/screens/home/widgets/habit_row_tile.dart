@@ -87,13 +87,15 @@ class HabitRowTile extends StatelessWidget {
                   final isFuture = day.isAfter(todayNorm);
                   final completed = data.completedOn(day);
                   final isToday = day == todayNorm;
+                  final isScheduled = data.isScheduledOn(day);
                   return _DayChip(
                     date: day,
                     completed: completed,
                     isFuture: isFuture,
                     isToday: isToday,
+                    isScheduled: isScheduled,
                     color: habitColor,
-                    onTap: isFuture ? null : () => onToggle(day),
+                    onTap: isFuture || !isScheduled ? null : () => onToggle(day),
                   );
                 }).toList(),
               ),
@@ -110,6 +112,7 @@ class _DayChip extends StatelessWidget {
   final bool completed;
   final bool isFuture;
   final bool isToday;
+  final bool isScheduled;
   final Color color;
   final VoidCallback? onTap;
 
@@ -118,6 +121,7 @@ class _DayChip extends StatelessWidget {
     required this.completed,
     required this.isFuture,
     required this.isToday,
+    required this.isScheduled,
     required this.color,
     this.onTap,
   });
@@ -128,6 +132,35 @@ class _DayChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final label = _dayLabels[date.weekday - 1];
+
+    if (!isScheduled) {
+      return Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: cs.onSurfaceVariant.withValues(alpha: 0.25),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 30,
+            height: 30,
+            child: Center(
+              child: Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.25),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return GestureDetector(
       onTap: onTap,

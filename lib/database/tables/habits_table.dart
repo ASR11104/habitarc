@@ -8,4 +8,7 @@ class Habits extends Table {
   IntColumn get iconCodePoint => integer().withDefault(const Constant(0xe3c9))();
   DateTimeColumn get createdAt => dateTime()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isWeeklyPillar => boolean().withDefault(const Constant(false))();
+  TextColumn get weeklyDays => text().nullable()();
 }

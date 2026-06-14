@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/habit_with_streak.dart';
 import '../../../providers/habits_provider.dart';
-import '../../add_habit/add_habit_screen.dart';
 import '../../habit_detail/habit_detail_screen.dart';
 import 'habit_row_tile.dart';
 
 class WeekView extends ConsumerWidget {
-  const WeekView({super.key});
+  final bool isWeeklyPillar;
+
+  const WeekView({super.key, required this.isWeeklyPillar});
 
   static List<DateTime> _currentWeekDays() {
     final now = DateTime.now();
@@ -36,20 +37,28 @@ class WeekView extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (items) {
-        if (items.isEmpty) {
+        final filteredItems = items
+            .where((item) => item.habit.isWeeklyPillar == isWeeklyPillar)
+            .toList();
+
+        if (filteredItems.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.checklist_rounded,
-                    size: 64,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.3)),
+                Icon(
+                  isWeeklyPillar
+                      ? Icons.view_week_outlined
+                      : Icons.checklist_rounded,
+                  size: 64,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.3),
+                ),
                 const SizedBox(height: 16),
                 Text(
-                  'No habits yet',
+                  isWeeklyPillar ? 'No weekly pillars yet' : 'No anchor habits yet',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context)
                             .colorScheme
@@ -59,7 +68,9 @@ class WeekView extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap + to add your first habit',
+                  isWeeklyPillar
+                      ? 'Tap + to add your first scheduled habit'
+                      : 'Tap + to add your first daily habit',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context)
                             .colorScheme
@@ -72,12 +83,23 @@ class WeekView extends ConsumerWidget {
           );
         }
 
-        return ListView.builder(
+        return ReorderableListView.builder(
           padding: const EdgeInsets.only(top: 8, bottom: 80),
-          itemCount: items.length,
+          itemCount: filteredItems.length,
+          onReorder: (oldIndex, newIndex) async {
+            if (newIndex > oldIndex) {
+              newIndex -= 1;
+            }
+            final item = filteredItems.removeAt(oldIndex);
+            filteredItems.insert(newIndex, item);
+            
+            final orderedIds = filteredItems.map((h) => h.habit.id).toList();
+            await repo.reorderHabits(orderedIds);
+          },
           itemBuilder: (context, i) {
-            final hws = items[i];
+            final hws = filteredItems[i];
             return HabitRowTile(
+              key: ValueKey(hws.habit.id),
               data: hws,
               weekDays: weekDays,
               onTap: () => Navigator.push(
@@ -88,7 +110,6 @@ class WeekView extends ConsumerWidget {
               ),
               onToggle: (date) async {
                 await repo.toggleLog(hws.habit.id, date);
-                // Re-read updated state and sync reminders
                 final updated = ref.read(habitsWithStreakProvider(range));
                 updated.whenData((list) {
                   final updatedHws =
@@ -96,37 +117,10 @@ class WeekView extends ConsumerWidget {
                   repo.syncReminder(updatedHws);
                 });
               },
-              onLongPress: () => _showHabitOptions(context, ref, hws.habit),
             );
           },
         );
       },
-    );
-  }
-
-  void _showHabitOptions(BuildContext context, WidgetRef ref, habit) {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddHabitScreen(habit: habit),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

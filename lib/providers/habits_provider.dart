@@ -62,14 +62,22 @@ class HabitsRepository {
   const HabitsRepository(this._db);
   final AppDatabase _db;
 
-  Future<void> addHabit(String name, String? description, int colorValue,
-      int iconCodePoint) async {
+  Future<void> addHabit(
+    String name,
+    String? description,
+    int colorValue,
+    int iconCodePoint, {
+    bool isWeeklyPillar = false,
+    String? weeklyDays,
+  }) async {
     await _db.insertHabit(HabitsCompanion(
       name: Value(name),
       description: Value(description),
       colorValue: Value(colorValue),
       iconCodePoint: Value(iconCodePoint),
       createdAt: Value(DateTime.now()),
+      isWeeklyPillar: Value(isWeeklyPillar),
+      weeklyDays: Value(weeklyDays),
     ));
   }
 
@@ -80,7 +88,13 @@ class HabitsRepository {
       description: Value(habit.description),
       colorValue: Value(habit.colorValue),
       iconCodePoint: Value(habit.iconCodePoint),
+      isWeeklyPillar: Value(habit.isWeeklyPillar),
+      weeklyDays: Value(habit.weeklyDays),
     ));
+  }
+
+  Future<void> reorderHabits(List<int> orderedIds) async {
+    await _db.reorderHabits(orderedIds);
   }
 
   Future<void> archiveHabit(int id) async {
@@ -99,6 +113,12 @@ class HabitsRepository {
 
   /// Call after any toggle to re-evaluate reminders for a habit.
   Future<void> syncReminder(HabitWithStreak hws) async {
+    if (hws.habit.isWeeklyPillar == true) {
+      // Exclude weekly pillars from next-day reminder scheduling
+      await NotificationService.cancelReminder(hws.habit.id);
+      return;
+    }
+
     final yesterday =
         DateTime.now().subtract(const Duration(days: 1));
     final yNorm = DateTime(yesterday.year, yesterday.month, yesterday.day);

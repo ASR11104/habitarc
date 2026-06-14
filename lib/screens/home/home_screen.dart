@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../add_habit/add_habit_screen.dart';
-import 'widgets/month_view.dart';
 import 'widgets/week_view.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -53,16 +52,16 @@ class _HomeScreenState extends State<HomeScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Week'),
-            Tab(text: 'Month'),
+            Tab(text: 'Anchor Habits'),
+            Tab(text: 'Weekly Pillars'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: const [
-          WeekView(),
-          MonthView(),
+          WeekView(isWeeklyPillar: false),
+          WeekView(isWeeklyPillar: true),
         ],
       ),
       floatingActionButton: FloatingActionButton(

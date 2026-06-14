@@ -11,7 +11,22 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(habits, habits.sortOrder);
+            await m.addColumn(habits, habits.isWeeklyPillar);
+            await m.addColumn(habits, habits.weeklyDays);
+            await customStatement('UPDATE habits SET sort_order = id');
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'habitarc');
@@ -19,8 +34,20 @@ class AppDatabase extends _$AppDatabase {
 
   // ── Habits ──────────────────────────────────────────────────────────────
 
-  Stream<List<Habit>> watchActiveHabits() =>
-      (select(habits)..where((h) => h.isActive.equals(true))).watch();
+  Stream<List<Habit>> watchActiveHabits() => (select(habits)
+        ..where((h) => h.isActive.equals(true))
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.sortOrder, mode: OrderingMode.asc),
+          (t) => OrderingTerm(expression: t.id, mode: OrderingMode.asc),
+        ]))
+      .watch();
+
+  Future<void> reorderHabits(List<int> orderedIds) => transaction(() async {
+        for (int i = 0; i < orderedIds.length; i++) {
+          await (update(habits)..where((h) => h.id.equals(orderedIds[i])))
+              .write(HabitsCompanion(sortOrder: Value(i)));
+        }
+      });
 
   Future<int> insertHabit(HabitsCompanion companion) =>
       into(habits).insert(companion);

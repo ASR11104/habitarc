@@ -25,6 +25,16 @@ const _icons = [
   Icons.restaurant,
   Icons.code,
   Icons.music_note,
+  Icons.cleaning_services,
+  Icons.school,
+  Icons.work,
+  Icons.computer,
+  Icons.brush,
+  Icons.home,
+  Icons.local_laundry_service,
+  Icons.shopping_cart,
+  Icons.pets,
+  Icons.local_florist,
 ];
 
 class AddHabitScreen extends ConsumerStatefulWidget {
@@ -41,6 +51,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   late final TextEditingController _descCtrl;
   late Color _selectedColor;
   late IconData _selectedIcon;
+  bool _isWeeklyPillar = false;
+  final Set<int> _selectedDays = {};
 
   @override
   void initState() {
@@ -54,6 +66,18 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     _selectedIcon = widget.habit != null
         ? IconData(widget.habit!.iconCodePoint, fontFamily: 'MaterialIcons')
         : _icons.first;
+    
+    _isWeeklyPillar = widget.habit?.isWeeklyPillar ?? false;
+    if (widget.habit?.weeklyDays != null && widget.habit!.weeklyDays!.isNotEmpty) {
+      _selectedDays.addAll(
+        widget.habit!.weeklyDays!
+            .split(',')
+            .map((s) => int.tryParse(s.trim()))
+            .whereType<int>(),
+      );
+    } else {
+      _selectedDays.addAll({1, 3, 5}); // Default to Mon, Wed, Fri
+    }
   }
 
   @override
@@ -67,12 +91,18 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     if (!_formKey.currentState!.validate()) return;
     final repo = ref.read(habitsRepositoryProvider);
 
+    final weeklyDaysStr = _isWeeklyPillar
+        ? (_selectedDays.toList()..sort()).join(',')
+        : null;
+
     if (widget.habit == null) {
       await repo.addHabit(
         _nameCtrl.text.trim(),
         _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         _selectedColor.toARGB32(),
         _selectedIcon.codePoint,
+        isWeeklyPillar: _isWeeklyPillar,
+        weeklyDays: weeklyDaysStr,
       );
     } else {
       final updated = widget.habit!.copyWith(
@@ -82,6 +112,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
             : _descCtrl.text.trim()),
         colorValue: _selectedColor.toARGB32(),
         iconCodePoint: _selectedIcon.codePoint,
+        isWeeklyPillar: _isWeeklyPillar,
+        weeklyDays: Value(weeklyDaysStr),
       );
       await repo.updateHabit(updated);
     }
@@ -180,6 +212,73 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 24),
+            SwitchListTile(
+              title: const Text('Weekly Pillar'),
+              subtitle: const Text('Track this habit on specific recurring days'),
+              value: _isWeeklyPillar,
+              onChanged: (val) {
+                setState(() => _isWeeklyPillar = val);
+              },
+            ),
+            if (_isWeeklyPillar) ...[
+              const SizedBox(height: 16),
+              Text('Days of the Week',
+                  style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (index) {
+                  final weekday = index + 1; // 1 = Monday, 7 = Sunday
+                  final isSelected = _selectedDays.contains(weekday);
+                  final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                  final dayLabel = labels[index];
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          if (_selectedDays.length > 1) {
+                            _selectedDays.remove(weekday);
+                          }
+                        } else {
+                          _selectedDays.add(weekday);
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? _selectedColor
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        border: isSelected
+                            ? null
+                            : Border.all(
+                                color: Theme.of(context).colorScheme.outlineVariant,
+                                width: 1,
+                              ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          dayLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ],
         ),
       ),

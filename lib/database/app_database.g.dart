@@ -91,6 +91,44 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isWeeklyPillarMeta = const VerificationMeta(
+    'isWeeklyPillar',
+  );
+  @override
+  late final GeneratedColumn<bool> isWeeklyPillar = GeneratedColumn<bool>(
+    'is_weekly_pillar',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_weekly_pillar" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _weeklyDaysMeta = const VerificationMeta(
+    'weeklyDays',
+  );
+  @override
+  late final GeneratedColumn<String> weeklyDays = GeneratedColumn<String>(
+    'weekly_days',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -100,6 +138,9 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     iconCodePoint,
     createdAt,
     isActive,
+    sortOrder,
+    isWeeklyPillar,
+    weeklyDays,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -162,6 +203,27 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_weekly_pillar')) {
+      context.handle(
+        _isWeeklyPillarMeta,
+        isWeeklyPillar.isAcceptableOrUnknown(
+          data['is_weekly_pillar']!,
+          _isWeeklyPillarMeta,
+        ),
+      );
+    }
+    if (data.containsKey('weekly_days')) {
+      context.handle(
+        _weeklyDaysMeta,
+        weeklyDays.isAcceptableOrUnknown(data['weekly_days']!, _weeklyDaysMeta),
+      );
+    }
     return context;
   }
 
@@ -199,6 +261,18 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
       )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isWeeklyPillar: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_weekly_pillar'],
+      )!,
+      weeklyDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weekly_days'],
+      ),
     );
   }
 
@@ -216,6 +290,9 @@ class Habit extends DataClass implements Insertable<Habit> {
   final int iconCodePoint;
   final DateTime createdAt;
   final bool isActive;
+  final int sortOrder;
+  final bool isWeeklyPillar;
+  final String? weeklyDays;
   const Habit({
     required this.id,
     required this.name,
@@ -224,6 +301,9 @@ class Habit extends DataClass implements Insertable<Habit> {
     required this.iconCodePoint,
     required this.createdAt,
     required this.isActive,
+    required this.sortOrder,
+    required this.isWeeklyPillar,
+    this.weeklyDays,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -237,6 +317,11 @@ class Habit extends DataClass implements Insertable<Habit> {
     map['icon_code_point'] = Variable<int>(iconCodePoint);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['is_active'] = Variable<bool>(isActive);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_weekly_pillar'] = Variable<bool>(isWeeklyPillar);
+    if (!nullToAbsent || weeklyDays != null) {
+      map['weekly_days'] = Variable<String>(weeklyDays);
+    }
     return map;
   }
 
@@ -251,6 +336,11 @@ class Habit extends DataClass implements Insertable<Habit> {
       iconCodePoint: Value(iconCodePoint),
       createdAt: Value(createdAt),
       isActive: Value(isActive),
+      sortOrder: Value(sortOrder),
+      isWeeklyPillar: Value(isWeeklyPillar),
+      weeklyDays: weeklyDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weeklyDays),
     );
   }
 
@@ -267,6 +357,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       iconCodePoint: serializer.fromJson<int>(json['iconCodePoint']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isWeeklyPillar: serializer.fromJson<bool>(json['isWeeklyPillar']),
+      weeklyDays: serializer.fromJson<String?>(json['weeklyDays']),
     );
   }
   @override
@@ -280,6 +373,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       'iconCodePoint': serializer.toJson<int>(iconCodePoint),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'isActive': serializer.toJson<bool>(isActive),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isWeeklyPillar': serializer.toJson<bool>(isWeeklyPillar),
+      'weeklyDays': serializer.toJson<String?>(weeklyDays),
     };
   }
 
@@ -291,6 +387,9 @@ class Habit extends DataClass implements Insertable<Habit> {
     int? iconCodePoint,
     DateTime? createdAt,
     bool? isActive,
+    int? sortOrder,
+    bool? isWeeklyPillar,
+    Value<String?> weeklyDays = const Value.absent(),
   }) => Habit(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -299,6 +398,9 @@ class Habit extends DataClass implements Insertable<Habit> {
     iconCodePoint: iconCodePoint ?? this.iconCodePoint,
     createdAt: createdAt ?? this.createdAt,
     isActive: isActive ?? this.isActive,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isWeeklyPillar: isWeeklyPillar ?? this.isWeeklyPillar,
+    weeklyDays: weeklyDays.present ? weeklyDays.value : this.weeklyDays,
   );
   Habit copyWithCompanion(HabitsCompanion data) {
     return Habit(
@@ -315,6 +417,13 @@ class Habit extends DataClass implements Insertable<Habit> {
           : this.iconCodePoint,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isWeeklyPillar: data.isWeeklyPillar.present
+          ? data.isWeeklyPillar.value
+          : this.isWeeklyPillar,
+      weeklyDays: data.weeklyDays.present
+          ? data.weeklyDays.value
+          : this.weeklyDays,
     );
   }
 
@@ -327,7 +436,10 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('colorValue: $colorValue, ')
           ..write('iconCodePoint: $iconCodePoint, ')
           ..write('createdAt: $createdAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isWeeklyPillar: $isWeeklyPillar, ')
+          ..write('weeklyDays: $weeklyDays')
           ..write(')'))
         .toString();
   }
@@ -341,6 +453,9 @@ class Habit extends DataClass implements Insertable<Habit> {
     iconCodePoint,
     createdAt,
     isActive,
+    sortOrder,
+    isWeeklyPillar,
+    weeklyDays,
   );
   @override
   bool operator ==(Object other) =>
@@ -352,7 +467,10 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.colorValue == this.colorValue &&
           other.iconCodePoint == this.iconCodePoint &&
           other.createdAt == this.createdAt &&
-          other.isActive == this.isActive);
+          other.isActive == this.isActive &&
+          other.sortOrder == this.sortOrder &&
+          other.isWeeklyPillar == this.isWeeklyPillar &&
+          other.weeklyDays == this.weeklyDays);
 }
 
 class HabitsCompanion extends UpdateCompanion<Habit> {
@@ -363,6 +481,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<int> iconCodePoint;
   final Value<DateTime> createdAt;
   final Value<bool> isActive;
+  final Value<int> sortOrder;
+  final Value<bool> isWeeklyPillar;
+  final Value<String?> weeklyDays;
   const HabitsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -371,6 +492,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.iconCodePoint = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isWeeklyPillar = const Value.absent(),
+    this.weeklyDays = const Value.absent(),
   });
   HabitsCompanion.insert({
     this.id = const Value.absent(),
@@ -380,6 +504,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.iconCodePoint = const Value.absent(),
     required DateTime createdAt,
     this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isWeeklyPillar = const Value.absent(),
+    this.weeklyDays = const Value.absent(),
   }) : name = Value(name),
        createdAt = Value(createdAt);
   static Insertable<Habit> custom({
@@ -390,6 +517,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<int>? iconCodePoint,
     Expression<DateTime>? createdAt,
     Expression<bool>? isActive,
+    Expression<int>? sortOrder,
+    Expression<bool>? isWeeklyPillar,
+    Expression<String>? weeklyDays,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -399,6 +529,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (iconCodePoint != null) 'icon_code_point': iconCodePoint,
       if (createdAt != null) 'created_at': createdAt,
       if (isActive != null) 'is_active': isActive,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isWeeklyPillar != null) 'is_weekly_pillar': isWeeklyPillar,
+      if (weeklyDays != null) 'weekly_days': weeklyDays,
     });
   }
 
@@ -410,6 +543,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<int>? iconCodePoint,
     Value<DateTime>? createdAt,
     Value<bool>? isActive,
+    Value<int>? sortOrder,
+    Value<bool>? isWeeklyPillar,
+    Value<String?>? weeklyDays,
   }) {
     return HabitsCompanion(
       id: id ?? this.id,
@@ -419,6 +555,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       iconCodePoint: iconCodePoint ?? this.iconCodePoint,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isWeeklyPillar: isWeeklyPillar ?? this.isWeeklyPillar,
+      weeklyDays: weeklyDays ?? this.weeklyDays,
     );
   }
 
@@ -446,6 +585,15 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isWeeklyPillar.present) {
+      map['is_weekly_pillar'] = Variable<bool>(isWeeklyPillar.value);
+    }
+    if (weeklyDays.present) {
+      map['weekly_days'] = Variable<String>(weeklyDays.value);
+    }
     return map;
   }
 
@@ -458,7 +606,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('colorValue: $colorValue, ')
           ..write('iconCodePoint: $iconCodePoint, ')
           ..write('createdAt: $createdAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isWeeklyPillar: $isWeeklyPillar, ')
+          ..write('weeklyDays: $weeklyDays')
           ..write(')'))
         .toString();
   }
@@ -742,6 +893,9 @@ typedef $$HabitsTableCreateCompanionBuilder =
       Value<int> iconCodePoint,
       required DateTime createdAt,
       Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<bool> isWeeklyPillar,
+      Value<String?> weeklyDays,
     });
 typedef $$HabitsTableUpdateCompanionBuilder =
     HabitsCompanion Function({
@@ -752,6 +906,9 @@ typedef $$HabitsTableUpdateCompanionBuilder =
       Value<int> iconCodePoint,
       Value<DateTime> createdAt,
       Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<bool> isWeeklyPillar,
+      Value<String?> weeklyDays,
     });
 
 final class $$HabitsTableReferences
@@ -818,6 +975,21 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isWeeklyPillar => $composableBuilder(
+    column: $table.isWeeklyPillar,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weeklyDays => $composableBuilder(
+    column: $table.weeklyDays,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -890,6 +1062,21 @@ class $$HabitsTableOrderingComposer
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isWeeklyPillar => $composableBuilder(
+    column: $table.isWeeklyPillar,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weeklyDays => $composableBuilder(
+    column: $table.weeklyDays,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$HabitsTableAnnotationComposer
@@ -927,6 +1114,19 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isWeeklyPillar => $composableBuilder(
+    column: $table.isWeeklyPillar,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get weeklyDays => $composableBuilder(
+    column: $table.weeklyDays,
+    builder: (column) => column,
+  );
 
   Expression<T> habitLogsRefs<T extends Object>(
     Expression<T> Function($$HabitLogsTableAnnotationComposer a) f,
@@ -989,6 +1189,9 @@ class $$HabitsTableTableManager
                 Value<int> iconCodePoint = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isWeeklyPillar = const Value.absent(),
+                Value<String?> weeklyDays = const Value.absent(),
               }) => HabitsCompanion(
                 id: id,
                 name: name,
@@ -997,6 +1200,9 @@ class $$HabitsTableTableManager
                 iconCodePoint: iconCodePoint,
                 createdAt: createdAt,
                 isActive: isActive,
+                sortOrder: sortOrder,
+                isWeeklyPillar: isWeeklyPillar,
+                weeklyDays: weeklyDays,
               ),
           createCompanionCallback:
               ({
@@ -1007,6 +1213,9 @@ class $$HabitsTableTableManager
                 Value<int> iconCodePoint = const Value.absent(),
                 required DateTime createdAt,
                 Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isWeeklyPillar = const Value.absent(),
+                Value<String?> weeklyDays = const Value.absent(),
               }) => HabitsCompanion.insert(
                 id: id,
                 name: name,
@@ -1015,6 +1224,9 @@ class $$HabitsTableTableManager
                 iconCodePoint: iconCodePoint,
                 createdAt: createdAt,
                 isActive: isActive,
+                sortOrder: sortOrder,
+                isWeeklyPillar: isWeeklyPillar,
+                weeklyDays: weeklyDays,
               ),
           withReferenceMapper: (p0) => p0
               .map(
