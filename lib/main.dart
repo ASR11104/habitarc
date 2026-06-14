@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,7 +7,11 @@ import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init();
-  await NotificationService.scheduleDailyReminder();
+  try {
+    await NotificationService.init();
+    await NotificationService.scheduleDailyReminder();
+  } catch (e) {
+    debugPrint('Failed to initialize notifications on startup: $e');
+  }
   runApp(const ProviderScope(child: HabitArcApp()));
 }
